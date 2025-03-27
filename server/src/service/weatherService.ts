@@ -2,11 +2,14 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // TODO: Define an interface for the Coordinates object
+// 03/19/2025 SGray - Done
 export interface Coordinates {
   latitude: number;
   longitude: number;
 }
+
 // TODO: Define a class for the Weather object
+// 03/24/2025 SGray - Done
 class Weather {
   city: string;
   date: string;
@@ -38,11 +41,13 @@ class Weather {
   formatTemperature(): string {
     return `${this.tempF}°F`;
   }
-}
+}// class Weather {
 
 // TODO: Complete the WeatherService class
+// 03/25/2025 SGray - Done
 class WeatherService {
   // TODO: Define the baseURL, API key, and city name properties
+  // 03/25/2025 SGray - Done
   private apiKey: string;
   private apiBaseURL: string;
   private APIGeocodeBaseURL;
@@ -57,7 +62,9 @@ class WeatherService {
     this.state = 'Colorado'; // Initialize state Hardcode for now
     this.country = 'US'; // Initialize country Hardcode for now
   }
+
   // TODO: Create fetchLocationData method
+  // 03/25/2025 SGray - Done
   private async fetchLocationData(city: string): Promise<any[]> {
     const url = this.buildGeocodeQuery();
     const response = await fetch(url);
@@ -77,6 +84,8 @@ class WeatherService {
   }// private async fetchLocationData(city: string): Promise<any> {
 
   // TODO: Create destructureLocationData method
+  // 03/25/2025 SGray - Done
+  // Destructures location data and returns the coordinates
   private destructureLocationData(locationData: any[]): Coordinates {
     if (!locationData || locationData.length === 0) {
       throw new Error('No location data found.');
@@ -89,14 +98,21 @@ class WeatherService {
 
     return { latitude: lat, longitude: lon }; // Return as a Coordinates object
   }
+
   // TODO: Create buildGeocodeQuery method
+  // 03/25/2025 SGray - Done
+  // Builds a query string for the OpenWeather Geocoding API
   private buildGeocodeQuery(): string {
     return `${this.APIGeocodeBaseURL}?q=${this.cityName}&${this.state}&${this.country}&limit=1&appid=${this.apiKey}`;
   }
+
   // TODO: Create buildWeatherQuery method
+  // 03/25/2025 SGray - Done
+  // Builds a query string for the OpenWeather Weather API
   private buildWeatherQuery(coordinates: Coordinates): string {
     return `${this.apiBaseURL}/weather?lat=${coordinates.latitude}&lon=${coordinates.longitude}&appid=${this.apiKey}&units=imperial`;
   }
+
   // TODO: Create fetchAndDestructureLocationData method
   // 03/19/2025 SGray - Done
   // Fetches location data and destructures it into coordinates
@@ -104,7 +120,10 @@ class WeatherService {
     const locationData = await this.fetchLocationData(this.cityName);
     return this.destructureLocationData(locationData);
   }
+
   // TODO: Create fetchWeatherData method
+  // 03/25/2025 SGray - Done
+  // Fetches weather data for the given coordinates
   private async fetchWeatherData(coordinates: Coordinates) {
     const url = this.buildWeatherQuery(coordinates);
     const response = await fetch(url);
@@ -113,11 +132,13 @@ class WeatherService {
     if (!response.ok) {
       throw new Error(`Failed to fetch weather data for coordinates: ${JSON.stringify(coordinates)}`);
     }
-
     const data = await response.json();
     return data; // Return the raw weather data
   }
+
   // TODO: Build parseCurrentWeather method
+  // 03/25/2025 SGray - Done
+  // Parses the current weather data and returns a Weather object
   private parseCurrentWeather(response: any): Weather {
     if (!response || typeof response !== 'object') {
       throw new Error('Invalid weather data');
@@ -135,8 +156,8 @@ class WeatherService {
     // Return a Weather object with the required fields
     return new Weather(city, date, icon, iconDescription, tempF, windSpeed, humidity);
   };
-  //Fetches forecast data for the given coordinates
   // 03/25/2025 SGray - Done
+  //Fetches forecast data for the given coordinates
   private async fetchForecastData(coordinates: Coordinates): Promise<any[]> {
     const url = `${this.apiBaseURL}/forecast?lat=${coordinates.latitude}&lon=${coordinates.longitude}&appid=${this.apiKey}&units=imperial`;
     const response = await fetch(url);
@@ -155,24 +176,43 @@ class WeatherService {
     return data.list; // Return the array of forecast data
   }
   // TODO: Complete buildForecastArray method
+  // 03/25/2025 SGray - Done
+  // Builds an array of Weather objects from the current weather and forecast data
   private buildForecastArray(currentWeather: Weather, forecastData: any[]): Weather[] {
-    // Map the forecast data to Weather objects
-    const forecastArray = forecastData.map((forecast) => {
+    // Create a map to store one forecast per day
+    const dailyForecastMap = new Map<string, any>();
+  
+    // Iterate over the forecast data
+    forecastData.forEach((forecast) => {
+      const date = forecast.dt_txt.split(' ')[0]; // Extract the date (YYYY-MM-DD)
+      const time = forecast.dt_txt.split(' ')[1]; // Extract the time (HH:mm:ss)
+  
+      // Only keep the forecast closest to 12:00:00 for each day
+      if (!dailyForecastMap.has(date) || time === '12:00:00') {
+        dailyForecastMap.set(date, forecast);
+      }
+    });
+  
+    // Convert the map values to an array and map them to Weather objects
+    const forecastArray = Array.from(dailyForecastMap.values()).map((forecast) => {
       const date = forecast.dt_txt; // Date and time of the forecast
       const tempF = forecast.main.temp; // Temperature in Fahrenheit
       const windSpeed = forecast.wind.speed; // Wind speed
       const humidity = forecast.main.humidity; // Humidity percentage
       const icon = forecast.weather[0].icon; // Weather icon code
       const iconDescription = forecast.weather[0].description; // Weather description
-
+  
       return new Weather(currentWeather.city, date, icon, iconDescription, tempF, windSpeed, humidity);
     });
-
+  
     // Return an array with the current weather as the first element
-    // followed by the forecast data
+    // followed by the filtered forecast data
     return [currentWeather, ...forecastArray];
-  }
+  }// private buildForecastArray(currentWeather: Weather, forecastData: any[]): Weather[] {
+
   // TODO: Complete getWeatherForCity method
+  // 03/25/2025 SGray - Done
+  // Fetches weather data for the given city and returns a Weather object
   async getWeatherForCity(city: string) {
     this.cityName = city;
     try {
@@ -188,7 +228,7 @@ class WeatherService {
       console.error('Error fetching weather data:', error);
       throw error; // Rethrow the error for handling in the calling code
     }
-  }
+  }// async getWeatherForCity(city: string) {
 }
 
 export default new WeatherService();

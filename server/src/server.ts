@@ -16,9 +16,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // TODO: Serve static files of entire client dist folder
+// 03/16/2025 SGray - Done
 app.use(express.static(path.join(__dirname, '../../client/dist')));
 
 // TODO: Implement middleware for parsing JSON and urlencoded form data
+// 03/16/2025 SGray - Done
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
